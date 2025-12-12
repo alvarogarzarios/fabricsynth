@@ -1,40 +1,66 @@
-# Welcome to Remix!
+# Fabricsynth
 
-- 📖 [Remix docs](https://remix.run/docs)
+Fabricsynth is an interactive audiovisual garment design platform, live at [fabricsynth.com](https://fabricsynth.com). It blends 3D clothing simulation with generative visuals powered by [p5.js](https://p5js.org/) and [Hydra](https://hydra.ojack.xyz/).
 
-## Development
+Originally started as a live-coding experiment combining p5.js sketches with Hydra video synth patches, the project has evolved into a full web experience for designing and previewing digital garments—while still keeping p5 and Hydra at its core for visuals and interaction.
 
-Run the dev server:
+## 🚀 Quick Start (Local Development)
 
-```shellscript
+```
+npm install
 npm run dev
 ```
 
-## Deployment
+Open `http://localhost:5173`. The production site runs at [fabricsynth.com](https://fabricsynth.com). [attached_file:1]
 
-First, build your app for production:
+## 📁 Project Structure
 
-```sh
-npm run build
+```
+fabricsynth/
+├── app/                 # Remix routes, loaders, and UI
+│   ├── routes/          # Pages (design, preview, performance, etc.)
+│   └── lib/             # 3D utils, audio/visual hooks, garment logic
+├── public/              # Static assets (textures, small models, icons)
+├── tailwind.config.js   # Design system tokens & theming
 ```
 
-Then run the app in production mode:
 
-```sh
-npm start
+## 🛠️ Development Commands
+
+```
+| Command           | Description                          |
+|-------------------|--------------------------------------|
+| `npm run dev`     | Start dev server with HMR           |
+| `npm run build`   | Build for production                |
+| `npm start`       | Run production server               |
+| `npm run lint`    | Lint source files                   |
+| `npm run typecheck` | Type-check TypeScript            |
 ```
 
-Now you'll need to pick a host to deploy it to.
+## 🌐 Deployment
 
-### DIY
+The live site at [fabricsynth.com](https://fabricsynth.com) is deployed from the `main` branch. Build output from `npm run build` is used by the host to serve both the Remix server and client bundles. [attached_file:1]
 
-If you're familiar with deploying Node applications, the built-in Remix app server is production-ready.
+## 🎨 Tech Stack
 
-Make sure to deploy the output of `npm run build`
+- **Framework**: Remix (full-stack React)
+- **Rendering**: WebGL via Three.js
+- **Generative visuals**: [p5.js](https://p5js.org/) and [Hydra](https://hydra.ojack.xyz/)
+- **Styling**: Tailwind CSS
+- **Build**: Vite-based Remix toolchain
 
-- `build/server`
-- `build/client`
+## 🔭 Vision
 
-## Styling
+- Keep the live-coding spirit of the original p5.js + Hydra synth, while exposing it through a more approachable web interface.
+- Let users design garments, map parameters to visuals and sound, and use Fabricsynth as both a design tool and performance instrument.
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.
+## 🤝 Contributing
+
+1. Fork and clone the repo.
+2. Install dependencies: `npm install`
+3. Create a feature branch: `git checkout -b feat/your-feature`
+4. Commit and push: `git commit -m "feat: add …"` then `git push origin feat/your-feature`
+5. Open a pull request against `main`.
+```
+
+Sources
