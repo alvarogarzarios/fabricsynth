@@ -2,16 +2,16 @@
 import React, { useRef, useState } from "react";
 
 const BLENDS = [
-  { label: "Add",        code: "A1" },
-  { label: "Multiply",   code: "M1" },
+  { label: "Add", code: "A1" },
+  { label: "Multiply", code: "M1" },
   { label: "Difference", code: "D1" },
-  { label: "Exclusion",  code: "E1" },
-  { label: "Blend",      code: "B1" },
-  { label: "Burn",       code: "B2" },
+  { label: "Exclusion", code: "E1" },
+  { label: "Blend", code: "B1" },
+  { label: "Burn", code: "B2" },
   { label: "Hard Light", code: "H1" },
   { label: "Soft Light", code: "S1" },
-  { label: "Overlay",    code: "O1" },
-  { label: "Screen",     code: "S2" },
+  { label: "Overlay", code: "O1" },
+  { label: "Screen", code: "S2" },
 ] as const;
 
 type BlendValue = (typeof BLENDS)[number]["label"];
@@ -24,11 +24,7 @@ type Props = {
 
 const STEPS = BLENDS.length; // 10
 
-export default function BlendDial({
-  value,
-  onChange,
-  className = "",
-}: Props) {
+export default function BlendDial({ value, onChange, className = "" }: Props) {
   const barRef = useRef<HTMLDivElement | null>(null);
   const [isActive, setIsActive] = useState(false);
 
@@ -90,16 +86,6 @@ export default function BlendDial({
 
   return (
     <div className={className}>
-      {/* Minimal labels */}
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs uppercase tracking-[0.12em] font-syne text-gray-400">
-          Blend
-        </span>
-        <span className="text-xs font-victor text-gray-200">
-          {currentBlend.code}
-        </span>
-      </div>
-
       {/* Full-width dial bar */}
       <div
         ref={barRef}
@@ -107,13 +93,13 @@ export default function BlendDial({
         onTouchStart={onTouchStart}
         className={`
           relative w-full h-8 rounded-full
-          bg-neutral-900/80 border border-neutral-700/60
+          bg-neutral-800
           cursor-pointer select-none
-          overflow-hidden
+          overflow-hidden 
         `}
       >
         {/* Base track */}
-        <div className="absolute inset-y-[10px] left-3 right-3 rounded-full bg-neutral-700/80" />
+        <div className="absolute inset-y-[10px] left-3 right-3 rounded-full bg-black border border-white/5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]" />
 
         {/* Step markers */}
         {Array.from({ length: STEPS }).map((_, i) => {
@@ -121,7 +107,7 @@ export default function BlendDial({
           return (
             <div
               key={i}
-              className="absolute top-1/2 -translate-y-1/2 w-px h-3 bg-neutral-500/70"
+              className="absolute top-1/2 -translate-y-1/2 w-px h-1 bg-neutral-500/70"
               style={{ left: `calc(3px + ${t * 100}% * (1 - 6px/100%))` }}
             />
           );
@@ -131,10 +117,12 @@ export default function BlendDial({
         <div
           className={`
             absolute top-1/2 -translate-y-1/2
-            w-4 h-4 rounded-full
-            border border-neutral-200/80
-            bg-neutral-100
-            ${isActive ? "shadow-[0_0_10px_rgba(255,255,255,0.7)]" : "shadow"}
+            w-3 h-6 rounded-full
+            ${
+              isActive
+                ? "bg-gradient-to-br from-purple-400 to-red-400 shadow-[0_0_12px_rgba(168,85,247,0.9)]"
+                : "bg-neutral-100 shadow hover:bg-gradient-to-br hover:from-purple-400 hover:to-red-400 hover:shadow-[0_0_12px_rgba(168,85,247,0.9)]"
+            }
             transition-shadow duration-100
           `}
           style={{

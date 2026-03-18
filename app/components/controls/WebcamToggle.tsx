@@ -92,12 +92,12 @@ export default function WebcamToggle({
         type="button"
         onClick={handleToggle}
         disabled={isLoading}
-        className={`group relative w-full overflow-hidden rounded-xl px-4 py-3 transition-all duration-300 ${
+        className={`group relative w-full overflow-hidden rounded-2xl py-3 transition-all duration-100 ${
           isLoading
             ? "opacity-60 cursor-not-allowed"
             : enabled
               ? "bg-neutral-700"
-              : "bg-neutral-800 hover:bg-neutral-700"
+              : "bg-neutral-800 hover:scale-[1.03] opacity-70 hover:opacity-100"
         }`}
       >
         {/* Glass backdrop */}
@@ -105,7 +105,7 @@ export default function WebcamToggle({
           <>
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-red-500/3 to-transparent backdrop-blur-sm" />
             <div
-              className="absolute inset-0 rounded-xl pointer-events-none"
+              className="absolute inset-0 rounded-2xl pointer-events-none"
               style={{
                 background:
                   "radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.15), rgba(239, 68, 68, 0.08), transparent 70%)",
@@ -123,10 +123,10 @@ export default function WebcamToggle({
           </>
         )}
 
-        <div className="relative flex items-center justify-between gap-3 z-10">
+        <div className="relative flex items-center justify-center gap-2 z-10">
           {/* Label */}
           <div className="flex flex-col items-start">
-            <span className="text-sm font-medium text-white">Webcam</span>
+            <span className="text-xs tracking-widest font-black text-white">CAMERA</span>
             {enabled && (
               <span className="text-xs text-purple-300 animate-pulse">
                 Camera active
@@ -150,7 +150,7 @@ export default function WebcamToggle({
               <img
                 src={getEyeSvg()}
                 alt="webcam status"
-                className="w-9 h-9 transition-all duration-100"
+                className="w-7 h-7 transition-all duration-100"
               />
             )}
           </div>

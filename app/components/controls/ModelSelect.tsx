@@ -24,7 +24,7 @@ export default function ModelSelect({ value, onChange, className = "" }: Props) 
         }`}
       >
         <span className="text-sm">
-          MODEL: <span className="font-semibold ml-1">{value}</span>
+          {/* MODEL:*/} <span className="font-semibold ml-1">{value}</span> 
         </span>
         <svg
           className={`w-4 h-4 ml-2 transition-transform duration-200 flex-shrink-0 ${

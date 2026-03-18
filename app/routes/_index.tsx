@@ -4,10 +4,10 @@ import { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import P5Sketch from "../components/P5Sketch";
 
-export const meta: MetaFunction = () => ([
+export const meta: MetaFunction = () => [
   { title: "FabricSynth" },
   { name: "description", content: "A p5-based visual sketch" },
-]);
+];
 
 export default function Index() {
   const [imageScale, setImageScale] = useState(2.1);
@@ -17,6 +17,11 @@ export default function Index() {
   const [fancyLighting, setFancyLighting] = useState(false);
   const [hydraEnabled, setHydraEnabled] = useState(true); // NEW
   const [webcamEnabled, setWebcamEnabled] = useState(false); // NEW
+  const [patternEnabled, setPatternEnabled] = useState(true);
+
+  const handleTogglePattern = () => {
+    setPatternEnabled((prev) => !prev); // only open/close UI
+  };
 
   return (
     <div className="flex w-full h-screen">
@@ -39,6 +44,8 @@ export default function Index() {
           }}
           webcamEnabled={webcamEnabled}
           onToggleWebcam={setWebcamEnabled}
+          patternEnabled={patternEnabled}
+          onTogglePattern={handleTogglePattern}
         />
       </div>
 
