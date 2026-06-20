@@ -1,4 +1,4 @@
-// app/components/P5Sketch.tsx - OPTIMIZED VERSION
+// app/components/P5Sketch.tsx
 import { useEffect, useRef } from "react";
 import type p5 from "p5";
 import {
@@ -18,6 +18,7 @@ interface SketchProps {
   selectedBlendMode: string;
   fancyLighting: boolean;
   hydraEnabled: boolean;
+  customTextureUrl: string | null;
 }
 
 export default function P5Sketch({
@@ -28,6 +29,7 @@ export default function P5Sketch({
   selectedBlendMode,
   fancyLighting,
   hydraEnabled,
+  customTextureUrl,
 }: SketchProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -39,6 +41,7 @@ export default function P5Sketch({
     selectedBlendMode,
     fancyLighting,
     hydraEnabled,
+    customTextureUrl,
   });
 
   useEffect(() => {
@@ -50,6 +53,7 @@ export default function P5Sketch({
       selectedBlendMode,
       fancyLighting,
       hydraEnabled,
+      customTextureUrl,
     };
   }, [
     imageScale,
@@ -59,6 +63,7 @@ export default function P5Sketch({
     selectedBlendMode,
     fancyLighting,
     hydraEnabled,
+    customTextureUrl,
   ]);
 
   useEffect(() => {
@@ -77,7 +82,7 @@ export default function P5Sketch({
         }
       }
 
-      // 🎯 OPT #1: Move blends OUTSIDE draw() - don't recreate every frame
+      // Pre-built outside draw() — no object recreation per frame
       const blends: Record<string, p5.BLEND_MODE> = {
         Add: p5.prototype.ADD,
         Multiply: p5.prototype.MULTIPLY,
@@ -96,13 +101,12 @@ export default function P5Sketch({
         const imageCache: Record<string, p5.Image> = {};
 
         let pg: p5.Graphics | null = null;
-        const synthCount = 3;
-        const hc: HTMLCanvasElement[] = new Array(synthCount);
-        const synth: Array<any> = new Array(synthCount);
+        let hc: HTMLCanvasElement | null = null;
+        let synth: any = null;
 
         let capture: p5.Element | null = null;
 
-        // 🎯 OPT #2: Cache container size, only read DOM when resized
+        // Cache container size — no DOM read per frame
         let cachedSize = { w: 0, h: 0 };
         const containerSize = () => {
           const el = containerRef.current;
@@ -112,50 +116,44 @@ export default function P5Sketch({
         };
 
         const ensurePG = () => {
-          // 🎯 OPT #3: Lower texture resolution (50% = 4x less fillrate)
+          // 50% texture resolution = 4x less fillrate
           const TEX_SCALE = 0.5;
-          const w = Math.ceil((hc[1]?.width || p.width) * TEX_SCALE);
-          const h = Math.ceil((hc[1]?.height || p.height) * TEX_SCALE);
+          const w = Math.ceil((hc?.width || p.width) * TEX_SCALE);
+          const h = Math.ceil((hc?.height || p.height) * TEX_SCALE);
 
           if (!pg || pg.width !== w || pg.height !== h) {
             (pg as any)?.remove?.();
-            pg = p.createGraphics(w, h, p.P2D); // 🎯 P2D is faster than default
+            pg = p.createGraphics(w, h, p.P2D);
           }
         };
 
         const ensureHydra = () => {
           if (!HydraCtor) {
-            console.warn(
-              "[Hydra] hydra-synth is not installed or failed to import.",
-            );
+            console.warn("[Hydra] hydra-synth is not installed or failed to import.");
             return;
           }
-          if (synth[1]) return;
+          if (synth) return;
 
-          for (let i = 0; i < synthCount; i++) {
-            const canvas = document.createElement(
-              "canvas",
-            ) as HTMLCanvasElement;
-            hc[i] = canvas;
-            const { w, h } = containerSize();
-            hc[i].width = w * 3;
-            hc[i].height = h * 3;
-            const hydraInstance = new HydraCtor({
-              canvas: hc[i],
-              detectAudio: false,
-              makeGlobal: false,
-            });
-            synth[i] = hydraInstance.synth;
-          }
+          const canvas = document.createElement("canvas") as HTMLCanvasElement;
+          const { w, h } = containerSize();
+          canvas.width = w * 3;
+          canvas.height = h * 3;
+          const hydraInstance = new HydraCtor({
+            canvas,
+            detectAudio: false,
+            makeGlobal: false,
+          });
+          hc = canvas;
+          synth = hydraInstance.synth;
 
-          window.hydraCanvas = hc[1];
+          window.hydraCanvas = hc;
 
-          synth[1]
+          synth
             .osc(20, 0.05, 2)
             .rotate(0.2)
             .colorama(0.8)
             .kaleid(4)
-            .modulate(synth[1].osc(10, 0.1).rotate(), 0.2)
+            .modulate(synth.osc(10, 0.1).rotate(), 0.2)
             .out();
 
           window.setHydraParams = (x: number, y: number) => {
@@ -165,16 +163,16 @@ export default function P5Sketch({
             const kaleid = 2 + Math.floor(y * 6);
             const rotateSpeed = x * 2;
 
-            synth[1]
+            synth
               .osc(freq, 0.05, amp)
               .rotate(rotateSpeed)
               .colorama(color)
               .kaleid(kaleid)
-              .modulate(synth[1].osc(10 + y * 50, 0.1).rotate(x * 3), 0.2)
+              .modulate(synth.osc(10 + y * 50, 0.1).rotate(x * 3), 0.2)
               .out();
           };
 
-          console.debug("[Hydra] multi-synth initialized");
+          console.debug("[Hydra] synth initialized");
         };
 
         const ensureCapture = () => {
@@ -213,24 +211,11 @@ export default function P5Sketch({
           cachedSize = newSize;
           p.resizeCanvas(newSize.w, newSize.h);
 
-          for (let i = 0; i < synthCount; i++) {
-            if (hc[1]) {
-              synth[1].render();
-              const ctx = pg!.drawingContext as CanvasRenderingContext2D;
-              if (ctx && hc[1]?.width > 0) {
-                // 🎯 Exact 1:1 - no scaling issues
-                ctx.drawImage(
-                  hc[1],
-                  0,
-                  0,
-                  hc[1].width,
-                  hc[1].height,
-                  0,
-                  0,
-                  pg!.width,
-                  pg!.height, // Perfect match!
-                );
-              }
+          if (hc && pg) {
+            synth.render();
+            const ctx = pg.drawingContext as CanvasRenderingContext2D;
+            if (ctx && hc.width > 0) {
+              ctx.drawImage(hc, 0, 0, hc.width, hc.height, 0, 0, pg.width, pg.height);
             }
           }
 
@@ -251,9 +236,8 @@ export default function P5Sketch({
         };
 
         p.setup = () => {
-          // 🎯 OPT #4: Critical performance boosters
-          p.pixelDensity(1); // Disable HiDPI (4-9x pixel reduction on Retina)
-          p.setAttributes({ antialias: false }); // Disable AA for rotation perf
+          p.pixelDensity(1); // Disable HiDPI — 4-9x pixel reduction on Retina
+          p.setAttributes({ antialias: false });
 
           const { w, h } = containerSize();
           cachedSize = { w, h };
@@ -270,17 +254,20 @@ export default function P5Sketch({
             selectedBlendMode,
             fancyLighting,
             hydraEnabled,
+            customTextureUrl,
           } = propsRef.current;
 
-          // 🎯 Use cached size - NO DOM READS per frame
+          // Poll container size every 30 frames to catch layout changes (sidebar toggle etc.)
+          if (p.frameCount % 30 === 0) {
+            const newSize = containerSize();
+            if (newSize.w !== cachedSize.w || newSize.h !== cachedSize.h) resizeAll();
+          }
           const { w, h } = cachedSize;
-          if (p.width !== w || p.height !== h) resizeAll();
 
           if (webcamEnabled && !capture) ensureCapture();
           else if (!webcamEnabled && capture) releaseCapture();
 
           p.background(0);
-          // p.background(255);
 
           if (fancyLighting) {
             p.pointLight(
@@ -305,35 +292,40 @@ export default function P5Sketch({
             pg!.clear();
           }
 
-          // 🎯 blends is now pre-defined above, no recreation
-
           if (hydraEnabled) {
-            if (!synth[1]) ensureHydra();
-            if (hc[1]) {
-              synth[1].render();
+            if (!synth) ensureHydra();
+            if (hc) {
+              synth.render();
               const ctx = pg!.drawingContext as CanvasRenderingContext2D;
-              if (ctx && hc[1]?.width > 0) {
-                // 🎯 OPT #5: Match pg size exactly, no oversampling waste
+              if (ctx && hc.width > 0) {
                 ctx.drawImage(
-                  hc[1],
+                  hc,
                   0,
                   0,
-                  hc[1].width,
-                  hc[1].height,
+                  hc.width,
+                  hc.height,
                   0,
                   0,
                   pg!.width * 2,
-                  pg!.height * 2, // was pg!.width * 4
+                  pg!.height * 2,
                 );
               }
             }
           }
 
-          if (selectedTexture !== "None" || webcamEnabled) {
+          if (selectedTexture !== "None" || webcamEnabled || customTextureUrl) {
             pg!.blendMode(blends[selectedBlendMode] || p.BLEND);
 
             if (webcamEnabled && capture) {
               pg!.image(capture as any, 0, 0, pg!.width, pg!.height);
+            } else if (customTextureUrl) {
+              if (!imageCache[customTextureUrl]) {
+                imageCache[customTextureUrl] = p.loadImage(customTextureUrl);
+              }
+              const tex = imageCache[customTextureUrl];
+              if (tex && tex.width > 0) {
+                pg!.image(tex, 0, 0, pg!.width, pg!.height);
+              }
             } else if (selectedTexture !== "None") {
               const base = textureByLabel[selectedTexture];
               if (base && !imageCache[base]) {
@@ -359,7 +351,7 @@ export default function P5Sketch({
           p.scale(Math.max(0.001, imageScale) * baseScale);
           p.rotateY(p.radians(-p.frameCount / 5));
 
-          if (selectedTexture !== "None" || webcamEnabled || hydraEnabled) {
+          if (selectedTexture !== "None" || webcamEnabled || hydraEnabled || customTextureUrl) {
             p.texture(pg!);
           } else {
             p.ambientMaterial(168, 0, 214);

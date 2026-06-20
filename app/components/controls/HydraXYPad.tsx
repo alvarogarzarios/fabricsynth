@@ -17,29 +17,92 @@ export default function HydraXYPad({
   onToggleEnabled,
 }: Props) {
   const padRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [pos, setPos] = useState({ x: 0.5, y: 0.5 });
-  const [isActive, setIsActive] = useState(false); // hover/drag state
+  const [isActive, setIsActive] = useState(false);
 
   useEffect(() => {
     onChange(pos.x, pos.y);
   }, [pos, onChange]);
 
+  // Canvas preview loop — cancelled on unmount via cancelAnimationFrame
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const ctx = el.getContext("2d");
+    if (!ctx) return;
+
+    let rafId: number;
+
+    const drawFrame = () => {
+      const container = padRef.current;
+      const hydraCanvas = (window as any).hydraCanvas as HTMLCanvasElement | undefined;
+
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        const displayWidth = rect.width || 1;
+        const displayHeight = rect.height || 1;
+
+        const dpr = window.devicePixelRatio || 1;
+        const requiredWidth = Math.floor(displayWidth * dpr);
+        const requiredHeight = Math.floor(displayHeight * dpr);
+
+        if (el.width !== requiredWidth || el.height !== requiredHeight) {
+          el.width = requiredWidth;
+          el.height = requiredHeight;
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        ctx.clearRect(0, 0, displayWidth, displayHeight);
+
+        if (hydraCanvas && hydraCanvas.width > 0 && hydraCanvas.height > 0) {
+          ctx.globalAlpha = 0.3;
+          ctx.save();
+
+          const radius = 12;
+          ctx.beginPath();
+          ctx.moveTo(radius, 0);
+          ctx.lineTo(displayWidth - radius, 0);
+          ctx.quadraticCurveTo(displayWidth, 0, displayWidth, radius);
+          ctx.lineTo(displayWidth, displayHeight - radius);
+          ctx.quadraticCurveTo(displayWidth, displayHeight, displayWidth - radius, displayHeight);
+          ctx.lineTo(radius, displayHeight);
+          ctx.quadraticCurveTo(0, displayHeight, 0, displayHeight - radius);
+          ctx.lineTo(0, radius);
+          ctx.quadraticCurveTo(0, 0, radius, 0);
+          ctx.closePath();
+          ctx.clip();
+
+          const scale = 1.25;
+          const scaledWidth = hydraCanvas.width * scale;
+          const scaledHeight = hydraCanvas.height * scale;
+          const offsetX = (el.width - scaledWidth) / 4;
+          const offsetY = (el.height - scaledHeight) / 4;
+
+          ctx.drawImage(hydraCanvas, offsetX, offsetY, scaledWidth, scaledHeight);
+          ctx.restore();
+        }
+      }
+
+      rafId = requestAnimationFrame(drawFrame);
+    };
+
+    rafId = requestAnimationFrame(drawFrame);
+    return () => cancelAnimationFrame(rafId);
+  }, []);
+
   const updatePosFromEvent = (e: React.MouseEvent | React.TouchEvent) => {
     if (!enabled) return;
-
     const rect = padRef.current?.getBoundingClientRect();
     if (!rect) return;
-
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
-
     const x = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
     const y = Math.min(1, Math.max(0, (clientY - rect.top) / rect.height));
-
     setPos({ x, y });
   };
 
-  const isOpen = enabled; // open when Hydra enabled
+  const isOpen = enabled;
 
   return (
     <div className={`flex flex-col ${className}`}>
@@ -112,98 +175,7 @@ export default function HydraXYPad({
           }}
         >
           <canvas
-            ref={(el) => {
-              if (!el) return;
-
-              const ctx = el.getContext("2d");
-              if (!ctx) return;
-
-              const drawFrame = () => {
-                const container = padRef.current;
-                const hydraCanvas = (window as any).hydraCanvas as
-                  | HTMLCanvasElement
-                  | undefined;
-
-                if (!container) {
-                  requestAnimationFrame(drawFrame);
-                  return;
-                }
-
-                const rect = container.getBoundingClientRect();
-                const displayWidth = rect.width || 1;
-                const displayHeight = rect.height || 1;
-
-                const dpr = window.devicePixelRatio || 1;
-                const requiredWidth = Math.floor(displayWidth * dpr);
-                const requiredHeight = Math.floor(displayHeight * dpr);
-
-                if (
-                  el.width !== requiredWidth ||
-                  el.height !== requiredHeight
-                ) {
-                  el.width = requiredWidth;
-                  el.height = requiredHeight;
-                  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-                }
-
-                ctx.clearRect(0, 0, displayWidth, displayHeight);
-
-                if (
-                  hydraCanvas &&
-                  hydraCanvas.width > 0 &&
-                  hydraCanvas.height > 0
-                ) {
-                  ctx.globalAlpha = 0.3;
-                  ctx.save();
-
-                  ctx.beginPath();
-                  const radius = 12;
-                  ctx.moveTo(radius, 0);
-                  ctx.lineTo(displayWidth - radius, 0);
-                  ctx.quadraticCurveTo(displayWidth, 0, displayWidth, radius);
-                  ctx.lineTo(displayWidth, displayHeight - radius);
-                  ctx.quadraticCurveTo(
-                    displayWidth,
-                    displayHeight,
-                    displayWidth - radius,
-                    displayHeight,
-                  );
-                  ctx.lineTo(radius, displayHeight);
-                  ctx.quadraticCurveTo(
-                    0,
-                    displayHeight,
-                    0,
-                    displayHeight - radius,
-                  );
-                  ctx.lineTo(0, radius);
-                  ctx.quadraticCurveTo(0, 0, radius, 0);
-                  ctx.closePath();
-                  ctx.clip();
-
-                  const scale = 1.25;
-                  const sourceWidth = hydraCanvas.width;
-                  const sourceHeight = hydraCanvas.height;
-                  const scaledWidth = sourceWidth * scale;
-                  const scaledHeight = sourceHeight * scale;
-                  const offsetX = (el.width - scaledWidth) / 4;
-                  const offsetY = (el.height - scaledHeight) / 4;
-
-                  ctx.drawImage(
-                    hydraCanvas,
-                    offsetX,
-                    offsetY,
-                    scaledWidth,
-                    scaledHeight,
-                  );
-
-                  ctx.restore();
-                }
-
-                requestAnimationFrame(drawFrame);
-              };
-
-              drawFrame();
-            }}
+            ref={canvasRef}
             className="absolute inset-0 z-0 grayscale opacity-30 w-full h-full"
           />
 
@@ -211,7 +183,7 @@ export default function HydraXYPad({
           <div
             className={`
               absolute w-4 h-4 rounded-full pointer-events-none
-              transition-colors transition-shadow duration-150
+              transition-all duration-150
               ${
                 isActive
                   ? "bg-gradient-to-br from-purple-400 to-red-400 shadow-[0_0_12px_rgba(168,85,247,0.9)]"

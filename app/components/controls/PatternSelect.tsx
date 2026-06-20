@@ -1,8 +1,7 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useRef } from "react";
 import {
   textureByLabel,
   textureThumbByLabel,
-  IMAGES_BASE,
   SVG_THUMBS_BASE,
 } from "../../lib/assets";
 import WebcamToggle from "./WebcamToggle";
@@ -16,6 +15,9 @@ type Props = {
   size?: number;
   webcamEnabled: boolean;
   onToggleWebcam: (enabled: boolean) => void;
+  customTextureUrl: string | null;
+  onUploadTexture: (url: string) => void;
+  onClearCustomTexture: () => void;
 };
 
 export default function PatternSelect({
@@ -27,8 +29,12 @@ export default function PatternSelect({
   onToggleEnabled,
   webcamEnabled,
   onToggleWebcam,
+  customTextureUrl,
+  onUploadTexture,
+  onClearCustomTexture,
 }: Props) {
-  // PRE-COMPUTE ALL URLS ONCE
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const PATTERNS = useMemo(
     () =>
       Object.entries(textureByLabel).map(([label]) => ({
@@ -40,19 +46,26 @@ export default function PatternSelect({
 
   const handlePatternClick = useCallback(
     (label: string) => {
-      if (value === label) {
-        // clicking again deselects
-        onChange("None");
-      } else {
-        onChange(label);
-      }
+      onChange(value === label ? "None" : label);
     },
     [value, onChange],
   );
 
-  const handleToggleClick = useCallback(() => {
-    onToggleEnabled();
-  }, [onToggleEnabled]);
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    onUploadTexture(url);
+    e.target.value = "";
+  };
+
+  const handleUploadClick = () => {
+    if (customTextureUrl) {
+      onClearCustomTexture();
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
 
   const isOpen = enabled;
 
@@ -67,7 +80,7 @@ export default function PatternSelect({
         <span className="text-sm">Overlay</span>
         <button type="button" className="p-1">
           <svg
-            onClick={handleToggleClick} // ← ADD THIS
+            onClick={onToggleEnabled}
             className={`w-4 h-4 ml-2 transition-transform duration-200 flex-shrink-0 cursor-pointer ${
               isOpen ? "rotate-180 -translate-y-[1px]" : ""
             }`}
@@ -108,7 +121,7 @@ export default function PatternSelect({
                   transition-all duration-100
                   ${
                     isSelected
-                      ? "border-0 shadow-lg scale-[1.03] hover:scale-[1.00]  !filter-none opacity-100"
+                      ? "border-0 shadow-lg scale-[1.03] hover:scale-[1.00] !filter-none opacity-100"
                       : "border-0 scale-[1.00] hover:scale-[1.03] brightness-40 grayscale hover:grayscale-0 opacity-50 hover:opacity-100"
                   }
                 `}
@@ -126,8 +139,64 @@ export default function PatternSelect({
             );
           })}
         </div>
+
         <div className="grid grid-cols-2 gap-2">
           <WebcamToggle enabled={webcamEnabled} onChange={onToggleWebcam} />
+
+          {/* Upload texture button */}
+          <button
+            type="button"
+            onClick={handleUploadClick}
+            className={`group relative w-full overflow-hidden rounded-2xl py-3 transition-all duration-100 ${
+              customTextureUrl
+                ? "bg-neutral-700"
+                : "bg-neutral-800 hover:scale-[1.03] opacity-70 hover:opacity-100"
+            }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileUpload}
+            />
+
+            {customTextureUrl && (
+              <>
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-red-500/3 to-transparent backdrop-blur-sm" />
+                <div
+                  className="absolute inset-0 rounded-2xl pointer-events-none"
+                  style={{
+                    background:
+                      "radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.15), rgba(239, 68, 68, 0.08), transparent 70%)",
+                  }}
+                />
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400/30 to-transparent rounded-full" />
+              </>
+            )}
+
+            <div className="relative flex items-center justify-center gap-2 z-10">
+              <div className="flex flex-col items-start">
+                <span className="text-xs tracking-widest font-black text-white">UPLOAD</span>
+                {customTextureUrl && (
+                  <span className="text-xs text-purple-300 animate-pulse">Custom active</span>
+                )}
+              </div>
+              <svg
+                className="w-5 h-5 text-white flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+          </button>
         </div>
       </div>
     </div>

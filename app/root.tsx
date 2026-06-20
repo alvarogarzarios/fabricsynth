@@ -5,17 +5,16 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
+import type { ReactNode } from "react";
 
 import "./tailwind.css";
-
-import PropTypes from "prop-types";
 
 export const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
     href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
+    crossOrigin: "anonymous" as const,
   },
   {
     rel: "stylesheet",
@@ -23,7 +22,7 @@ export const links = () => [
   },
 ];
 
-export function Layout({ children }) {
+export function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
@@ -41,14 +40,6 @@ export function Layout({ children }) {
   );
 }
 
-Layout.propTypes = {
-  children: PropTypes.node.isRequired,
-};
-
 export default function App() {
-  return (
-    <Layout>
-      <Outlet />
-    </Layout>
-  );
+  return <Outlet />;
 }

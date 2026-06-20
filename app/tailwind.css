@@ -10,3 +10,13 @@ body {
 h1, h2, h3, h4, h5, h6 {
   @apply font-syne;
 }
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

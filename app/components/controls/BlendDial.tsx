@@ -17,7 +17,7 @@ const BLENDS = [
 type BlendValue = (typeof BLENDS)[number]["label"];
 
 type Props = {
-  value: BlendValue;
+  value: string;
   onChange: (v: BlendValue) => void;
   className?: string;
 };

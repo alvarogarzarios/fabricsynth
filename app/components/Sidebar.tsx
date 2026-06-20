@@ -1,4 +1,5 @@
 // app/components/Sidebar.tsx
+import type { ReactNode } from "react";
 import ToggleField from "./controls/ToggleField";
 import HydraXYPad from "./controls/HydraXYPad";
 import ModelSelect from "./controls/ModelSelect";
@@ -20,9 +21,6 @@ type SidebarProps = {
   selectedBlendMode: string;
   onBlendChange: (v: string) => void;
 
-  darkMode: boolean;
-  onToggleDark: () => void;
-
   fancyLighting: boolean;
   onToggleFancy: () => void;
 
@@ -36,22 +34,13 @@ type SidebarProps = {
 
   patternEnabled: boolean;
   onTogglePattern: () => void;
+
+  customTextureUrl: string | null;
+  onUploadTexture: (url: string) => void;
+  onClearCustomTexture: () => void;
 };
 
-const BLEND_OPTIONS = [
-  "Add",
-  "Multiply",
-  "Difference",
-  "Exclusion",
-  "Blend",
-  "Hard Light",
-  "Soft Light",
-  "Burn",
-  "Overlay",
-  "Screen",
-].map((v) => ({ value: v }));
-
-const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+const SectionLabel = ({ children }: { children: ReactNode }) => (
   <div className="text-xs uppercase tracking-[0.12em] text-gray-400 font-syne mt-6 mb-3 first:mt-0 ml-2">
     {children}
   </div>
@@ -76,11 +65,14 @@ export default function Sidebar(props: SidebarProps) {
     onToggleWebcam,
     patternEnabled,
     onTogglePattern,
+    customTextureUrl,
+    onUploadTexture,
+    onClearCustomTexture,
   } = props;
 
   return (
-    <div className="p-0 m-0 h-full text-neutral-100">
-      <div className="h-full p-5 pl-7 backdrop-blur-2xl bg-white/10 shadow-[inset_0_0_100px_rgba(255,255,255,0.1)] overflow-y-auto">
+    <div className="relative p-0 m-0 h-full text-neutral-100">
+      <div className="h-full p-5 pl-7 backdrop-blur-2xl bg-white/10 shadow-[inset_0_0_100px_rgba(255,255,255,0.1)] overflow-y-auto scrollbar-hide">
         {/* Header with logo and title */}
         <div className="flex items-left gap-3">
           <img
@@ -111,10 +103,13 @@ export default function Sidebar(props: SidebarProps) {
         <PatternSelect
           value={selectedTexture}
           onChange={onTextureChange}
-          enabled={patternEnabled} // ← Use enabled prop
+          enabled={patternEnabled}
           onToggleEnabled={onTogglePattern}
           webcamEnabled={webcamEnabled}
           onToggleWebcam={onToggleWebcam}
+          customTextureUrl={customTextureUrl}
+          onUploadTexture={onUploadTexture}
+          onClearCustomTexture={onClearCustomTexture}
           className="mb-3"
           size={200}
         />
@@ -123,13 +118,11 @@ export default function Sidebar(props: SidebarProps) {
 
         <BlendDial
           className="mb-3"
-          value={selectedBlendMode as any}
+          value={selectedBlendMode}
           onChange={onBlendChange}
         />
 
         <SectionLabel>Effects</SectionLabel>
-
-        {/* Effects */}
 
         <ToggleField
           id="fancy-lighting"
@@ -140,6 +133,9 @@ export default function Sidebar(props: SidebarProps) {
           onChange={onToggleFancy}
         />
       </div>
+
+      {/* Gradient fade at bottom to hint at more content */}
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/80 to-transparent" />
     </div>
   );
 }

@@ -41,9 +41,4 @@ export const textureThumbByLabel: Record<string, string> = {
   // ...
 };
 
-export const textureExtByBase: Record<string, "png" | "jpg"> = {
-  trash: "jpg",
-  mossy: "jpg",
-  moss: "jpg",
-  iceland: "jpg",
-};
+export const textureExtByBase: Record<string, "png" | "jpg"> = {};
