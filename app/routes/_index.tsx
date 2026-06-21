@@ -20,6 +20,7 @@ export default function Index() {
   const [patternEnabled, setPatternEnabled] = useState(true);
   const [customTextureUrl, setCustomTextureUrl] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [overlayScale, setOverlayScale] = useState(1.5);
 
   const handleTextureChange = useCallback((label: string) => {
     setSelectedTexture(label);
@@ -79,6 +80,8 @@ export default function Index() {
             customTextureUrl={customTextureUrl}
             onUploadTexture={handleUploadTexture}
             onClearCustomTexture={handleClearCustomTexture}
+            overlayScale={overlayScale}
+            onOverlayScaleChange={setOverlayScale}
           />
         </div>
       </div>
@@ -94,6 +97,7 @@ export default function Index() {
           hydraEnabled={hydraEnabled}
           webcamEnabled={webcamEnabled}
           customTextureUrl={customTextureUrl}
+          overlayScale={overlayScale}
         />
 
         {/* Sidebar toggle */}

@@ -19,6 +19,7 @@ interface SketchProps {
   fancyLighting: boolean;
   hydraEnabled: boolean;
   customTextureUrl: string | null;
+  overlayScale: number;
 }
 
 export default function P5Sketch({
@@ -30,6 +31,7 @@ export default function P5Sketch({
   fancyLighting,
   hydraEnabled,
   customTextureUrl,
+  overlayScale,
 }: SketchProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -42,6 +44,7 @@ export default function P5Sketch({
     fancyLighting,
     hydraEnabled,
     customTextureUrl,
+    overlayScale,
   });
 
   useEffect(() => {
@@ -54,6 +57,7 @@ export default function P5Sketch({
       fancyLighting,
       hydraEnabled,
       customTextureUrl,
+      overlayScale,
     };
   }, [
     imageScale,
@@ -64,6 +68,7 @@ export default function P5Sketch({
     fancyLighting,
     hydraEnabled,
     customTextureUrl,
+    overlayScale,
   ]);
 
   useEffect(() => {
@@ -255,6 +260,7 @@ export default function P5Sketch({
             fancyLighting,
             hydraEnabled,
             customTextureUrl,
+            overlayScale,
           } = propsRef.current;
 
           // Poll container size every 30 frames to catch layout changes (sidebar toggle etc.)
@@ -316,16 +322,23 @@ export default function P5Sketch({
           if (selectedTexture !== "None" || webcamEnabled || customTextureUrl) {
             pg!.blendMode(blends[selectedBlendMode] || p.BLEND);
 
+            // Draw helper — applies overlayScale centered on the pg buffer
+            const drawOverlay = (src: p5.Image | p5.Element) => {
+              const sw = pg!.width * overlayScale;
+              const sh = pg!.height * overlayScale;
+              const sx = (pg!.width - sw) / 2;
+              const sy = (pg!.height - sh) / 2;
+              pg!.image(src as p5.Image, sx, sy, sw, sh);
+            };
+
             if (webcamEnabled && capture) {
-              pg!.image(capture as any, 0, 0, pg!.width, pg!.height);
+              drawOverlay(capture);
             } else if (customTextureUrl) {
               if (!imageCache[customTextureUrl]) {
                 imageCache[customTextureUrl] = p.loadImage(customTextureUrl);
               }
               const tex = imageCache[customTextureUrl];
-              if (tex && tex.width > 0) {
-                pg!.image(tex, 0, 0, pg!.width, pg!.height);
-              }
+              if (tex && tex.width > 0) drawOverlay(tex);
             } else if (selectedTexture !== "None") {
               const base = textureByLabel[selectedTexture];
               if (base && !imageCache[base]) {
@@ -333,9 +346,7 @@ export default function P5Sketch({
                 imageCache[base] = p.loadImage(`${IMAGES_BASE}/${base}.${ext}`);
               }
               const tex = imageCache[base];
-              if (tex && tex.width > 0) {
-                pg!.image(tex, 0, 0, pg!.width, pg!.height);
-              }
+              if (tex && tex.width > 0) drawOverlay(tex);
             }
 
             pg!.blendMode(p.BLEND);

@@ -1,17 +1,16 @@
 // components/controls/BlendDial.tsx
-import React, { useRef, useState } from "react";
 
 const BLENDS = [
-  { label: "Add", code: "A1" },
-  { label: "Multiply", code: "M1" },
-  { label: "Difference", code: "D1" },
-  { label: "Exclusion", code: "E1" },
-  { label: "Blend", code: "B1" },
-  { label: "Burn", code: "B2" },
-  { label: "Hard Light", code: "H1" },
-  { label: "Soft Light", code: "S1" },
-  { label: "Overlay", code: "O1" },
-  { label: "Screen", code: "S2" },
+  { label: "Add",        code: "ADD" },
+  { label: "Multiply",   code: "MUL" },
+  { label: "Difference", code: "DIF" },
+  { label: "Exclusion",  code: "EXC" },
+  { label: "Blend",      code: "BLD" },
+  { label: "Burn",       code: "BRN" },
+  { label: "Hard Light", code: "HRD" },
+  { label: "Soft Light", code: "SFT" },
+  { label: "Overlay",    code: "OVL" },
+  { label: "Screen",     code: "SCR" },
 ] as const;
 
 type BlendValue = (typeof BLENDS)[number]["label"];
@@ -22,113 +21,39 @@ type Props = {
   className?: string;
 };
 
-const STEPS = BLENDS.length; // 10
-
 export default function BlendDial({ value, onChange, className = "" }: Props) {
-  const barRef = useRef<HTMLDivElement | null>(null);
-  const [isActive, setIsActive] = useState(false);
-
-  const currentIndex = BLENDS.findIndex((b) => b.label === value) || 0;
-  const currentBlend = BLENDS[currentIndex];
-
-  const indexFromX = (clientX: number) => {
-    if (!barRef.current) return currentIndex;
-
-    const rect = barRef.current.getBoundingClientRect();
-    const t = (clientX - rect.left) / rect.width; // 0..1
-    const clamped = Math.max(0, Math.min(1, t));
-    const idx = Math.round(clamped * (STEPS - 1));
-    return idx;
-  };
-
-  const handlePointer = (clientX: number) => {
-    const idx = indexFromX(clientX);
-    const blend = BLENDS[idx];
-    if (blend.label !== value) onChange(blend.label);
-  };
-
-  const onMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsActive(true);
-    handlePointer(e.clientX);
-
-    const move = (ev: MouseEvent) => handlePointer(ev.clientX);
-    const up = () => {
-      setIsActive(false);
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
-    };
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-  };
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    e.preventDefault();
-    setIsActive(true);
-    const t = e.touches[0];
-    handlePointer(t.clientX);
-
-    const move = (ev: TouchEvent) => {
-      const touch = ev.touches[0];
-      if (!touch) return;
-      handlePointer(touch.clientX);
-    };
-    const end = () => {
-      setIsActive(false);
-      window.removeEventListener("touchmove", move);
-      window.removeEventListener("touchend", end);
-    };
-    window.addEventListener("touchmove", move);
-    window.addEventListener("touchend", end);
-  };
-
-  const percent = (currentIndex / (STEPS - 1)) * 100;
-
   return (
     <div className={className}>
-      {/* Full-width dial bar */}
-      <div
-        ref={barRef}
-        onMouseDown={onMouseDown}
-        onTouchStart={onTouchStart}
-        className={`
-          relative w-full h-8 rounded-full
-          bg-neutral-800
-          cursor-pointer select-none
-          overflow-hidden 
-        `}
-      >
-        {/* Base track */}
-        <div className="absolute inset-y-[10px] left-3 right-3 rounded-full bg-black border border-white/5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]" />
+      {/* Current selection label */}
+      <div className="flex justify-end mb-1.5 ml-2 mr-0.5">
+        <span className="text-[10px] text-neutral-500 font-victor tracking-widest uppercase">
+          {value}
+        </span>
+      </div>
 
-        {/* Step markers */}
-        {Array.from({ length: STEPS }).map((_, i) => {
-          const t = i / (STEPS - 1 || 1);
+      {/* 5 × 2 compact grid */}
+      <div className="grid grid-cols-5 gap-1">
+        {BLENDS.map((blend) => {
+          const isSelected = blend.label === value;
           return (
-            <div
-              key={i}
-              className="absolute top-1/2 -translate-y-1/2 w-px h-1 bg-neutral-500/70"
-              style={{ left: `calc(3px + ${t * 100}% * (1 - 6px/100%))` }}
-            />
+            <button
+              key={blend.label}
+              type="button"
+              title={blend.label}
+              onClick={() => onChange(blend.label)}
+              className={`
+                h-7 rounded-md text-[9px] font-black font-victor tracking-wider
+                transition-all duration-100
+                ${isSelected
+                  ? "bg-gradient-to-br from-purple-500/50 to-red-500/35 text-white shadow-[0_0_8px_rgba(168,85,247,0.35)] scale-[1.04]"
+                  : "bg-neutral-800 text-neutral-500 hover:text-neutral-200 hover:bg-neutral-700"
+                }
+              `}
+            >
+              {blend.code}
+            </button>
           );
         })}
-
-        {/* Thumb */}
-        <div
-          className={`
-            absolute top-1/2 -translate-y-1/2
-            w-3 h-6 rounded-full
-            ${
-              isActive
-                ? "bg-gradient-to-br from-purple-400 to-red-400 shadow-[0_0_12px_rgba(168,85,247,0.9)]"
-                : "bg-neutral-100 shadow hover:bg-gradient-to-br hover:from-purple-400 hover:to-red-400 hover:shadow-[0_0_12px_rgba(168,85,247,0.9)]"
-            }
-            transition-shadow duration-100
-          `}
-          style={{
-            left: `calc(3px + (${percent}% * (1 - 6px/100%)) - 0.5rem)`,
-          }}
-        />
       </div>
     </div>
   );

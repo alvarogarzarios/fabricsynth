@@ -5,8 +5,6 @@ import HydraXYPad from "./controls/HydraXYPad";
 import ModelSelect from "./controls/ModelSelect";
 import ModelSize from "./controls/ModelSize";
 import PatternSelect from "./controls/PatternSelect";
-import WebcamToggle from "./controls/WebcamToggle";
-import BlendDial from "./controls/BlendDial";
 
 type SidebarProps = {
   imageScale: number;
@@ -38,6 +36,9 @@ type SidebarProps = {
   customTextureUrl: string | null;
   onUploadTexture: (url: string) => void;
   onClearCustomTexture: () => void;
+
+  overlayScale: number;
+  onOverlayScaleChange: (v: number) => void;
 };
 
 const SectionLabel = ({ children }: { children: ReactNode }) => (
@@ -68,12 +69,14 @@ export default function Sidebar(props: SidebarProps) {
     customTextureUrl,
     onUploadTexture,
     onClearCustomTexture,
+    overlayScale,
+    onOverlayScaleChange,
   } = props;
 
   return (
     <div className="relative p-0 m-0 h-full text-neutral-100">
       <div className="h-full p-5 pl-7 backdrop-blur-2xl bg-white/10 shadow-[inset_0_0_100px_rgba(255,255,255,0.1)] overflow-y-auto scrollbar-hide">
-        {/* Header with logo and title */}
+        {/* Logo */}
         <div className="flex items-left gap-3">
           <img
             src="/fabricsynth-logo.svg"
@@ -82,16 +85,12 @@ export default function Sidebar(props: SidebarProps) {
           />
         </div>
 
-        {/* Model */}
         <SectionLabel>Model</SectionLabel>
         <ModelSelect value={selectedModel} onChange={onModelChange} />
-
         <ModelSize value={imageScale} onChange={onImageScaleChange} />
 
-        {/* Texture */}
         <SectionLabel>Texture</SectionLabel>
 
-        {/* Hydra */}
         <HydraXYPad
           size={200}
           onChange={onHydraControl}
@@ -110,16 +109,12 @@ export default function Sidebar(props: SidebarProps) {
           customTextureUrl={customTextureUrl}
           onUploadTexture={onUploadTexture}
           onClearCustomTexture={onClearCustomTexture}
+          selectedBlendMode={selectedBlendMode}
+          onBlendChange={onBlendChange}
+          overlayScale={overlayScale}
+          onOverlayScaleChange={onOverlayScaleChange}
           className="mb-3"
           size={200}
-        />
-
-        <SectionLabel>Blend</SectionLabel>
-
-        <BlendDial
-          className="mb-3"
-          value={selectedBlendMode}
-          onChange={onBlendChange}
         />
 
         <SectionLabel>Effects</SectionLabel>
